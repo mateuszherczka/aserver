@@ -13,6 +13,8 @@
 #include <KukaBuildXMLExample.hpp>
 #include <KukaParseXMLExample.hpp>
 
+#include <ServerConfig.hpp>
+
 using boost::asio::ip::tcp;
 using std::exception;
 using boost::thread;
@@ -26,8 +28,12 @@ class Server
 {
     public:
         Server() {
-            // TODO: Read in prefs from an XML file
-            // TODO: Read in build and parse classes from file
+
+            serverConfig.load();
+            cout << "Port MaxBufferSize EndString:" << endl;
+            serverConfig.printValues();
+
+            startListening(serverConfig.getPort());
         }
 
         virtual ~Server() {
@@ -35,13 +41,6 @@ class Server
         }
 
         void session() {};
-
-        /*
-        Connect to default.
-        */
-//        void connectToServer() {
-//            connectToServer(defaultHost,defaultPort);
-//        }
 
         /*
         Specify port.
@@ -90,17 +89,16 @@ class Server
         bool connected = false;
         bool doParse = false;
 
-        std::string defaultHost = "localhost"; //std::string defaultHost = "127.0.0.1";
-        std::string defaultPort = "6008";
-        std::string endString = "</Robot>";
-        std::size_t maxBufferSize = 1024;
+        ServerConfig serverConfig;
+
+
 
         //KukaBuildXMLFrame kukaBuildMessage;
         //KukaParseXMLFrame kukaParseMessage;
         KukaBuildXMLExample kukaBuildMessage;
         KukaParseXMLExample kukaParseMessage;
 
-        // TODO: ServerXMLConfig serverConfig;
+
 
         void readMessage(socket_ptr sock) {
             // TODO: is lock read necessary (probably not)
@@ -108,10 +106,10 @@ class Server
             try {
                 int counter = 0;
                 while (sock->is_open() && connected) {
-                    boost::asio::streambuf message(maxBufferSize); // TODO: streambuf sould not be created here but reused, how?
+                    boost::asio::streambuf message(serverConfig.getMaxBufferSize()); // TODO: streambuf should not be created here but reused, how?
 
                     try {   // if endtag isnt found before buffer max reached
-                        boost::asio::read_until(*sock, message, endString);
+                        boost::asio::read_until(*sock, message, serverConfig.getEndString());
                         cout << "Server read message #" << counter << endl;
                         cout << streambufToPtr(message) << endl;
 
@@ -175,3 +173,9 @@ class Server
 };
 
 #endif // SERVER_H
+
+
+//std::string defaultHost = "localhost"; //std::string defaultHost = "127.0.0.1";
+//std::string defaultPort = "6008";
+//std::string endString = "</Robot>";
+//std::size_t maxBufferSize = 1024;

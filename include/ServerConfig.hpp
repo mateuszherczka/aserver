@@ -11,7 +11,7 @@ class ServerConfig : public XMLParser
 {
     public:
         ServerConfig() {
-            load();
+            //load();
         }
         virtual ~ServerConfig() {}
 
@@ -34,6 +34,10 @@ class ServerConfig : public XMLParser
 
             cout << port << " " << maxBufferSize << " " << endString << endl;
         }
+
+        unsigned short getPort() { return port; }
+        size_t getMaxBufferSize() { return maxBufferSize; }
+        std::string getEndString() { return endString; }    // TODO: endString.c_ptr() ?
 
     protected:
 
