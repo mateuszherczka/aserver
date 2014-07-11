@@ -1,17 +1,18 @@
 # depslib dependency file v1.0
-1404914646 source:/home/mh/dev/aserver/main.cpp
+1405077940 source:/home/mh/dev/aserver/main.cpp
 	<iostream>
 	<Server.hpp>
+	<ServerConfig.hpp>
 
-1404914878 /home/mh/dev/aserver/include/Server.hpp
+1405066631 /home/mh/dev/aserver/include/Server.hpp
 	<iostream>
 	<istream>
 	<ostream>
 	<string>
 	<boost/asio.hpp>
 	<boost/thread.hpp>
-	<KukaBuildXMLFrame.hpp>
-	<KukaParseXMLFrame.hpp>
+	<KukaBuildXMLExample.hpp>
+	<KukaParseXMLExample.hpp>
 
 1404913112 /home/mh/dev/xmltest/include/KukaBuildXMLFrame.hpp
 	<boost/asio.hpp>
@@ -34,4 +35,21 @@
 	<cstdarg>
 	<android/log.h>
 	<assert.h>
+
+1404981528 /home/mh/dev/xmltest/include/KukaBuildXMLExample.hpp
+	<boost/asio.hpp>
+	<tinyxml2.h>
+
+1404977676 /home/mh/dev/xmltest/include/KukaParseXMLExample.hpp
+	<boost/lexical_cast.hpp>
+	<boost/asio.hpp>
+	<tinyxml2.h>
+
+1405077925 /home/mh/dev/aserver/include/ServerConfig.hpp
+	<XMLParser.hpp>
+
+1405077731 /home/mh/dev/aserver/include/XMLParser.hpp
+	<boost/lexical_cast.hpp>
+	<boost/asio.hpp>
+	<tinyxml2.h>
 

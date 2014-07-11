@@ -8,8 +8,10 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 
-#include <KukaBuildXMLFrame.hpp>
-#include <KukaParseXMLFrame.hpp>
+//#include <KukaBuildXMLFrame.hpp>
+//#include <KukaParseXMLFrame.hpp>
+#include <KukaBuildXMLExample.hpp>
+#include <KukaParseXMLExample.hpp>
 
 using boost::asio::ip::tcp;
 using std::exception;
@@ -23,7 +25,10 @@ typedef boost::shared_ptr<tcp::socket> socket_ptr;
 class Server
 {
     public:
-        Server() {}
+        Server() {
+            // TODO: Read in prefs from an XML file
+            // TODO: Read in build and parse classes from file
+        }
 
         virtual ~Server() {
             closeConnection();
@@ -83,12 +88,19 @@ class Server
     private:
 
         bool connected = false;
+        bool doParse = false;
 
         std::string defaultHost = "localhost"; //std::string defaultHost = "127.0.0.1";
-        std::string defaultPort = "10001";
+        std::string defaultPort = "6008";
+        std::string endString = "</Robot>";
+        std::size_t maxBufferSize = 1024;
 
-        KukaBuildXMLFrame kukaBuildMessage;
-        KukaParseXMLFrame kukaParseMessage;
+        //KukaBuildXMLFrame kukaBuildMessage;
+        //KukaParseXMLFrame kukaParseMessage;
+        KukaBuildXMLExample kukaBuildMessage;
+        KukaParseXMLExample kukaParseMessage;
+
+        // TODO: ServerXMLConfig serverConfig;
 
         void readMessage(socket_ptr sock) {
             // TODO: is lock read necessary (probably not)
@@ -96,18 +108,29 @@ class Server
             try {
                 int counter = 0;
                 while (sock->is_open() && connected) {
-                    boost::asio::streambuf message; // TODO: streambuf sould not be created here but reused, how?
-                    boost::asio::read_until(*sock, message, "</Rob>\r\n");
+                    boost::asio::streambuf message(maxBufferSize); // TODO: streambuf sould not be created here but reused, how?
 
-                    cout << "Server read message #" << counter << endl;
-                    kukaParseMessage.parse(message);
-                    kukaParseMessage.printValues();
+                    try {   // if endtag isnt found before buffer max reached
+                        boost::asio::read_until(*sock, message, endString);
+                        cout << "Server read message #" << counter << endl;
+                        cout << streambufToPtr(message) << endl;
 
-                    ++counter;
+                        if (doParse) {
+                            kukaParseMessage.parse(message);
+                            kukaParseMessage.printValues();
+                        }
+
+                        ++counter;
+                    }
+                    catch (std::exception &e){
+                        cout << "Reading (no matching xml end element): " << e.what() << endl;
+                        cout << "Buffer contents:" << endl;
+                        cout << streambufToPtr(message);
+                    }   // complain but don't quit
                 }
             }
             catch (std::exception &e){
-                cout << "Reading exception: " << e.what() << endl;
+                cout << "Fatal reading exception: " << e.what() << endl;
                 closeConnection();
                 return;
             }
@@ -126,7 +149,9 @@ class Server
 
                     // write xml every second
                     boost::asio::streambuf message;
-                    kukaBuildMessage.build(message,1+counter,2+counter,3+counter,4+counter,5+counter,6+counter);
+                    //kukaBuildMessage.build(message,1+counter,2+counter,3+counter,4+counter,5+counter,6+counter);
+                    kukaBuildMessage.setPosXYZ(counter,counter,counter);
+                    kukaBuildMessage.build(message);
                     boost::asio::write(*sock, message);
 
                     cout << "Server wrote message #" << counter << endl;
@@ -139,6 +164,14 @@ class Server
                 return;
             }
         };     // separate thread
+
+        /*
+        Gets a pointer to buffer inside streambuf.
+        */
+        const char * streambufToPtr(boost::asio::streambuf &message) {
+            const char* bufPtr=boost::asio::buffer_cast<const char*>(message.data());
+            return bufPtr;
+        }
 };
 
 #endif // SERVER_H

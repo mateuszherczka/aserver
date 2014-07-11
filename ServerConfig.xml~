@@ -1,0 +1,5 @@
+<ServerConfig>
+	<Port>6009</Port>
+	<MaxBufferSize>2048</MaxBufferSize>
+	<EndString>&#60;TheEnd&#47;&#62;></EndString>
+</ServerConfig>
