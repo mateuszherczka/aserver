@@ -153,6 +153,21 @@ class KukaResponse : public XMLParser
             return robotFrame;
         }
 
+        void printValues() {
+
+            cout << "Info: ";
+            for (const auto &val : robotInfo) {
+                cout << val << " ";
+            }
+            cout << endl;
+
+            cout << "Frame: ";
+            for (const auto &val : robotFrame) {
+                cout << val << " ";
+            }
+            cout << endl;
+        }
+
     protected:
 
     private:

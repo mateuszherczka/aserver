@@ -132,19 +132,17 @@ class Server
             int counter = 0;    // just to change message a little
             try {
                 while (sock->is_open() && connected) {
-                    // is there something in the write queue?
-                    // if so, write
+                    // TODO: implement a write queue
 
+                    // for testing we write something every nn seconds
                     boost::this_thread::sleep( boost::posix_time::seconds(5) );
 
-                    // write xml every second
                     // TODO: make this an external function/interface/handle/thingie
                     boost::asio::streambuf message;
                     std::vector<int> info {1, counter, 1};
                     std::vector<double> frame {counter, counter, counter, counter, counter, counter};   // WARNING DONT SEND THIS WHEN MOVING
-
-                    // TODO: create info and frame for command
                     command.format(message, info, frame);
+
                     boost::asio::write(*sock, message);
 
                     cout << "Server wrote message #" << counter << endl;
