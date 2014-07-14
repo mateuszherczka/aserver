@@ -8,13 +8,10 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 
-//#include <KukaBuildXMLFrame.hpp>
-//#include <KukaParseXMLFrame.hpp>
-#include <KukaBuildXMLExample.hpp>
-#include <KukaParseXMLExample.hpp>
 
 #include <ServerConfig.hpp>
 #include <KukaResponse.hpp>
+#include <KukaCommand.hpp>
 
 using boost::asio::ip::tcp;
 using std::exception;
@@ -90,16 +87,10 @@ class Server
         bool connected = false;
         bool doParse = false;
 
+        // XML parsers
         ServerConfig serverConfig;
-
-
-
-        //KukaBuildXMLFrame kukaBuildMessage;
-        //KukaParseXMLFrame kukaParseMessage;
-        KukaBuildXMLExample kukaBuildMessage;
-        KukaParseXMLExample kukaParseMessage;
-
-
+        KukaCommand command;
+        KukaResponse response;
 
         void readMessage(socket_ptr sock) {
             // TODO: is lock read necessary (probably not)
@@ -115,17 +106,17 @@ class Server
                         cout << streambufToPtr(message) << endl;
 
                         if (doParse) {
-                            kukaParseMessage.parse(message);
-                            kukaParseMessage.printValues();
+                            response.parse(message);
+                            response.printValues();
                         }
 
                         ++counter;
                     }
-                    catch (std::exception &e){
+                    catch (std::exception &e){  // complain but don't quit
                         cout << "Reading (no matching xml end element): " << e.what() << endl;
-                        cout << "Buffer contents:" << endl;
-                        cout << streambufToPtr(message);
-                    }   // complain but don't quit
+                        //cout << "Buffer contents:" << endl;
+                        //cout << streambufToPtr(message);
+                    }
                 }
             }
             catch (std::exception &e){
@@ -144,13 +135,16 @@ class Server
                     // is there something in the write queue?
                     // if so, write
 
-                    boost::this_thread::sleep( boost::posix_time::seconds(3) );
+                    boost::this_thread::sleep( boost::posix_time::seconds(5) );
 
                     // write xml every second
+                    // TODO: make this an external function/interface/handle/thingie
                     boost::asio::streambuf message;
-                    //kukaBuildMessage.build(message,1+counter,2+counter,3+counter,4+counter,5+counter,6+counter);
-                    kukaBuildMessage.setPosXYZ(counter,counter,counter);
-                    kukaBuildMessage.build(message);
+                    std::vector<int> info {1, counter, 1};
+                    std::vector<double> frame {counter, counter, counter, counter, counter, counter};   // WARNING DONT SEND THIS WHEN MOVING
+
+                    // TODO: create info and frame for command
+                    command.format(message, info, frame);
                     boost::asio::write(*sock, message);
 
                     cout << "Server wrote message #" << counter << endl;
@@ -175,6 +169,19 @@ class Server
 
 #endif // SERVER_H
 
+
+//#include <KukaBuildXMLFrame.hpp>
+//#include <KukaParseXMLFrame.hpp>
+//#include <KukaBuildXMLExample.hpp>
+//#include <KukaParseXMLExample.hpp>
+
+        //KukaBuildXMLFrame kukaBuildMessage;
+        //KukaParseXMLFrame kukaParseMessage;
+        //KukaBuildXMLExample kukaBuildMessage;
+        //KukaParseXMLExample kukaParseMessage;
+
+//kukaBuildMessage.build(message,1+counter,2+counter,3+counter,4+counter,5+counter,6+counter);
+                    //command.setPosXYZ(counter,counter,counter);
 
 //std::string defaultHost = "localhost"; //std::string defaultHost = "127.0.0.1";
 //std::string defaultPort = "6008";

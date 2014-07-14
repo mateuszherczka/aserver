@@ -12,14 +12,10 @@ class KukaResponse : public XMLParser
 {
     public:
 
-        KukaResponse() : robotInfo(5,0), robotFrame(6,0) {
+        KukaResponse() : robotInfo(5,0), robotFrame(6,0) {}
 
-            //std::vector<int> robotInfo (5,0);
-            //std::vector<double> robotFrame (6,0);
-        }
         virtual ~KukaResponse() {}
 
-        // TODO: implement parse()
         void parse(boost::asio::streambuf &message) {
 
             // try to parse
@@ -27,7 +23,6 @@ class KukaResponse : public XMLParser
 
             if (errorState != 0) {  // something wrong with xml
                 malformedXMLError("KukaResponse XMLDocument" );
-                valid = false;
                 return;
             }
 
@@ -139,16 +134,21 @@ class KukaResponse : public XMLParser
 
                 if (xmlerr != 0) {
                     malformedXMLError("ActPos Attributes");
-                    valid = false;
                 }
             }
             else {  nodeNotFound("ActPos"); }
         }
 
+        /*
+            Status Error Mode Tick Id
+        */
         std::vector<int> getInfo() {
             return robotInfo;
         }
 
+        /*
+            X Y Z A B C
+        */
         std::vector<double> getFrame() {
             return robotFrame;
         }

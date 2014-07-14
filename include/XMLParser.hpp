@@ -29,7 +29,6 @@ class XMLParser
         XMLDocument doc;        // tinyxml
         bool valid = true; // this is set to false if there is a malformed XML error
 
-
         /*
         Gets pointer to buffer inside streambuf.
         */
@@ -41,6 +40,7 @@ class XMLParser
         void malformedXMLError(const char *e) {
             cout << "XML malformed at: " << e << endl;
             errorState = MALFORMED_XML_ERROR;
+            valid = false;
         }
 
         void nodeNotFound(const char *e) {
@@ -49,6 +49,7 @@ class XMLParser
 
         void badCast(const char *e) {
             cout << "Bad cast exception, value not changed: " << e << endl;
+            valid = false;
         }
 
 
