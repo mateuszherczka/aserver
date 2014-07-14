@@ -41,6 +41,8 @@
 			<Add library="boost_thread" />
 		</Linker>
 		<Unit filename="include/Server.hpp" />
+		<Unit filename="include/ServerConfig.hpp" />
+		<Unit filename="include/XMLParser.hpp" />
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<code_completion />

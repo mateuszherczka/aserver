@@ -52,7 +52,6 @@ class ServerConfig : public XMLParser
         std::size_t maxBufferSize = 1024;
 
         void parse() {
-            // TODO: implement parse()
             XMLHandle docHandle( &doc );
             XMLText *xmltext;
             // port

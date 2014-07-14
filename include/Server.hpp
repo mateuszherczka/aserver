@@ -14,6 +14,7 @@
 #include <KukaParseXMLExample.hpp>
 
 #include <ServerConfig.hpp>
+#include <KukaResponse.hpp>
 
 using boost::asio::ip::tcp;
 using std::exception;

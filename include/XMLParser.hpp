@@ -21,11 +21,14 @@ class XMLParser
         XMLParser() {}
         virtual ~XMLParser() {}
 
+        bool isValid() { return valid; }
 
     protected:
 
         int errorState = 0;
         XMLDocument doc;        // tinyxml
+        bool valid = true; // this is set to false if there is a malformed XML error
+
 
         /*
         Gets pointer to buffer inside streambuf.
@@ -43,6 +46,11 @@ class XMLParser
         void nodeNotFound(const char *e) {
             cout << "Node not found, value not changed: " << e << endl;
         }
+
+        void badCast(const char *e) {
+            cout << "Bad cast exception, value not changed: " << e << endl;
+        }
+
 
     private:
 
