@@ -12,7 +12,7 @@ class KukaCommand
 
         /*
             mesage: a streambuf to fill
-            info:   Mode Tick Run
+            info:   Mode Tick Id Run
             frame:  X Y Z A B C
         */
         void format( boost::asio::streambuf &message, const std::vector<int> &info , const std::vector<double> &frame) {
@@ -23,7 +23,8 @@ class KukaCommand
 
             to_message_stream   << "<Mode>" << info[0] << "</Mode>\r\n";
             to_message_stream   << "<Tick>" << info[1] << "</Tick>\r\n";
-            to_message_stream   << "<Run>" << info[2] << "</Run>\r\n";
+            to_message_stream   << "<Id>" << info[2] << "</Id>\r\n";
+            to_message_stream   << "<Run>" << info[3] << "</Run>\r\n";
 
             to_message_stream   << "<Frame X=\"" << frame[0] << "\" "
                                 << "Y=\"" << frame[1] << "\" "

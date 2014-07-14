@@ -85,7 +85,7 @@ class Server
     private:
 
         bool connected = false;
-        bool doParse = false;
+        bool doParse = true;
 
         // XML parsers
         ServerConfig serverConfig;
@@ -114,8 +114,8 @@ class Server
                     }
                     catch (std::exception &e){  // complain but don't quit
                         cout << "Reading (no matching xml end element): " << e.what() << endl;
-                        //cout << "Buffer contents:" << endl;
-                        //cout << streambufToPtr(message);
+                        cout << "Buffer contents:" << endl;
+                        cout << streambufToPtr(message);
                     }
                 }
             }
@@ -129,7 +129,7 @@ class Server
         void writeMessage(socket_ptr sock) {
             // TODO: is lock write necessary (probably not)
             cout << "Server write thread started." << endl;
-            int counter = 0;    // just to change message a little
+            int counter = 1;    // just to change message a little
             try {
                 while (sock->is_open() && connected) {
                     // TODO: implement a write queue
@@ -139,7 +139,7 @@ class Server
 
                     // TODO: make this an external function/interface/handle/thingie
                     boost::asio::streambuf message;
-                    std::vector<int> info {1, counter, 1};
+                    std::vector<int> info {counter, counter, counter, 1};  // mode tick id run
                     std::vector<double> frame {counter, counter, counter, counter, counter, counter};   // WARNING DONT SEND THIS WHEN MOVING
                     command.format(message, info, frame);
 

@@ -49,7 +49,7 @@ class ServerConfig : public XMLParser
         // default
         unsigned short port = 6008;
         std::string endString = "</Robot>";
-        std::size_t maxBufferSize = 1024;
+        std::size_t maxBufferSize = 2048;
 
         void parse() {
             XMLHandle docHandle( &doc );
