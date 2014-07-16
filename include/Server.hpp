@@ -8,6 +8,7 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 
+#include<ThreadSafeQueue.hpp>
 
 #include <ServerConfig.hpp>
 #include <KukaResponse.hpp>
@@ -38,7 +39,10 @@ class Server
             closeConnection();
         }
 
-        void session() {};
+        void session() {}
+
+        void sendPose(const std::vector<int> &info, const std::vector<double> &frame) {}    // TODO: implement sendCommand()
+        void sendTrajectory() {} // TODO: implement sendTrajectory()
 
         /*
         Specify port.
@@ -92,6 +96,9 @@ class Server
         KukaCommand command;
         KukaResponse response;
 
+        // queue for incoming messages
+        ThreadSafeQueue< std::pair <std::vector<int>,std::vector<double>> > messageQueue;
+
         void readMessage(socket_ptr sock) {
             // TODO: is lock read necessary (probably not)
             cout << "Server read thread started." << endl;
@@ -143,8 +150,40 @@ class Server
 
             try {
                 while (sock->is_open() && connected) {
-                    // TODO: implement a write queue
+                    // TODO: test write queue
 
+                    std::pair<std::vector<int>,std::vector<double>> inPair; // expecting pair of vectors
+                    messageQueue.wait_and_pop(inPair);
+
+                    boost::asio::streambuf message;
+                    command.format(message, inPair.first, inPair.second);   // first: infovector<int>, second: framevector<int>
+                    boost::asio::write(*sock, message);
+
+                    ++counter;
+
+
+
+                }
+            }
+            catch (std::exception &e){
+                cout << "Writing exception: " << e.what() << endl;
+                closeConnection();
+                return;
+            }
+        };     // separate thread
+
+        /*
+        Gets a pointer to buffer inside streambuf.
+        */
+        const char * streambufToPtr(boost::asio::streambuf &message) {
+            const char* bufPtr=boost::asio::buffer_cast<const char*>(message.data());
+            return bufPtr;
+        }
+};
+
+#endif // SERVER_H
+
+                    /*
                     // for testing we write something every nn seconds
                     //boost::this_thread::sleep( boost::posix_time::seconds(1) );
 
@@ -154,7 +193,7 @@ class Server
                         boost::asio::streambuf message;
 
                         std::vector<int> info = {1, counter, 1, 1};  // mode tick id run
-                        std::vector<double> frame = {0, 500, 600, -90, 0, 180};
+                        std::vector<double> frame = {0, 700, 700, -90, 0, 180};
                         command.format(message, info, frame);
                         boost::asio::write(*sock, message);
 
@@ -169,7 +208,7 @@ class Server
                         boost::asio::streambuf message;
 
                         std::vector<int> info = {1, counter, 1, 1};  // mode tick id run
-                        std::vector<double> frame = {100, 500, 600, -90, 0, 180};
+                        std::vector<double> frame = {100, 600, 600, -90, 0, 180};
                         command.format(message, info, frame);
                         boost::asio::write(*sock, message);
 
@@ -184,7 +223,7 @@ class Server
                         boost::asio::streambuf message;
 
                         std::vector<int> info = {1, counter, 1, 1};  // mode tick id run
-                        std::vector<double> frame = {-100, 500, 600, -90, 0, 180};
+                        std::vector<double> frame = {-100, 500, 500, -90, 0, 180};
                         command.format(message, info, frame);
                         boost::asio::write(*sock, message);
 
@@ -214,25 +253,7 @@ class Server
                     ++counter;  // do nothing
 
                     }
-                }
-            }
-            catch (std::exception &e){
-                cout << "Writing exception: " << e.what() << endl;
-                closeConnection();
-                return;
-            }
-        };     // separate thread
-
-        /*
-        Gets a pointer to buffer inside streambuf.
-        */
-        const char * streambufToPtr(boost::asio::streambuf &message) {
-            const char* bufPtr=boost::asio::buffer_cast<const char*>(message.data());
-            return bufPtr;
-        }
-};
-
-#endif // SERVER_H
+                    */
 
 
 //#include <KukaBuildXMLFrame.hpp>

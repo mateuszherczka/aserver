@@ -3,13 +3,14 @@
 	<iostream>
 	<Server.hpp>
 
-1405494226 /home/mh/dev/aserver/include/Server.hpp
+1405523315 /home/mh/dev/aserver/include/Server.hpp
 	<iostream>
 	<istream>
 	<ostream>
 	<string>
 	<boost/asio.hpp>
 	<boost/thread.hpp>
+	<ThreadSafeQueue.hpp>
 	<ServerConfig.hpp>
 	<KukaResponse.hpp>
 	<KukaCommand.hpp>
@@ -58,4 +59,10 @@
 	<XMLParser.hpp>
 
 1405432293 /home/mh/dev/aserver/include/KukaCommand.hpp
+
+1405522202 /home/mh/dev/aserver/include/ThreadSafeQueue.hpp
+	<mutex>
+	<condition_variable>
+	<queue>
+	<memory>
 
