@@ -26,12 +26,12 @@ class KukaCommand
             to_message_stream   << "<Id>" << info[2] << "</Id>\r\n";
             to_message_stream   << "<Run>" << info[3] << "</Run>\r\n";
 
-            to_message_stream   << "<Frame X=\"" << frame[0] << "\" "
-                                << "Y=\"" << frame[1] << "\" "
-                                << "Z=\"" << frame[2] << "\" "
-                                << "A=\"" << frame[3] << "\" "
-                                << "B=\"" << frame[4] << "\" "
-                                << "C=\"" << frame[5] << "\"/>\r\n";
+            to_message_stream   << "<XFrame XPos=\"" << frame[0] << "\" "   // the attributes MUST be XPos YPos ZPos ARot BRot CRot
+                                << "YPos=\"" << frame[1] << "\" "
+                                << "ZPos=\"" << frame[2] << "\" "
+                                << "ARot=\"" << frame[3] << "\" "
+                                << "BRot=\"" << frame[4] << "\" "
+                                << "CRot=\"" << frame[5] << "\" />\r\n";
 
             to_message_stream   << "</ExternalData>\r\n";
             //to_message_stream   << "\r\n";

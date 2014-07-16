@@ -40,8 +40,11 @@
 			<Add library="boost_system" />
 			<Add library="boost_thread" />
 		</Linker>
+		<Unit filename="include/KukaCommand.hpp" />
+		<Unit filename="include/KukaResponse.hpp" />
 		<Unit filename="include/Server.hpp" />
 		<Unit filename="include/ServerConfig.hpp" />
+		<Unit filename="include/XMLFormatter.hpp" />
 		<Unit filename="include/XMLParser.hpp" />
 		<Unit filename="main.cpp" />
 		<Extensions>

@@ -98,28 +98,36 @@ class Server
             try {
                 int counter = 0;
                 while (sock->is_open() && connected) {
-                    boost::asio::streambuf message(serverConfig.getMaxBufferSize()); // TODO: streambuf should not be created here but reused, how?
 
-                    try {   // if endtag isnt found before buffer max reached
-                        boost::asio::read_until(*sock, message, serverConfig.getEndString());
-                        cout << "Server read message #" << counter << endl;
-                        cout << streambufToPtr(message) << endl;
+                    boost::asio::streambuf message(serverConfig.getMaxBufferSize()); // TODO: streambuf should not be created here but reused, how?
+                    try {
+                        boost::system::error_code error;
+                        boost::asio::read_until(*sock, message, serverConfig.getEndString(), error);
+
+                        if (error == boost::asio::error::eof) {
+                            cout << "Client disconnected." << endl;
+                            connected = false;
+                            return;
+                        }
 
                         if (doParse) {
                             response.parse(message);
                             response.printValues();
                         }
 
+                        cout << "Server read message #" << counter << endl;
+                        cout << streambufToPtr(message) << endl;
+
                         ++counter;
                     }
                     catch (std::exception &e){  // complain but don't quit
-                        cout << "Reading (no matching xml end element): " << e.what() << endl;
+                        cout << "Reading (no matching xml end element?): " << e.what() << endl;
                         cout << "Buffer contents:" << endl;
                         cout << streambufToPtr(message);
                     }
                 }
             }
-            catch (std::exception &e){
+            catch (std::exception &e){  // actually this is useless right now
                 cout << "Fatal reading exception: " << e.what() << endl;
                 closeConnection();
                 return;
@@ -127,26 +135,85 @@ class Server
         };  // separate thread
 
         void writeMessage(socket_ptr sock) {
-            // TODO: is lock write necessary (probably not)
-            cout << "Server write thread started." << endl;
+
+            cout << "Server write thread started, waiting 5 seconds." << endl;
+            boost::this_thread::sleep( boost::posix_time::seconds(5) );
+
             int counter = 1;    // just to change message a little
+
             try {
                 while (sock->is_open() && connected) {
                     // TODO: implement a write queue
 
                     // for testing we write something every nn seconds
-                    boost::this_thread::sleep( boost::posix_time::seconds(5) );
+                    //boost::this_thread::sleep( boost::posix_time::seconds(1) );
 
-                    // TODO: make this an external function/interface/handle/thingie
-                    boost::asio::streambuf message;
-                    std::vector<int> info {counter, counter, counter, 1};  // mode tick id run
-                    std::vector<double> frame {counter, counter, counter, counter, counter, counter};   // WARNING DONT SEND THIS WHEN MOVING
-                    command.format(message, info, frame);
+                    // we write a series of messages, then do nothing more
+                    if (counter == 1) {    // only send once to test
 
-                    boost::asio::write(*sock, message);
+                        boost::asio::streambuf message;
 
-                    cout << "Server wrote message #" << counter << endl;
-                    ++counter;
+                        std::vector<int> info = {1, counter, 1, 1};  // mode tick id run
+                        std::vector<double> frame = {0, 500, 600, -90, 0, 180};
+                        command.format(message, info, frame);
+                        boost::asio::write(*sock, message);
+
+                        cout << "Server wrote message #" << counter << endl;
+                        cout << streambufToPtr(message) << endl;
+                        cout << endl;
+
+                        ++counter;
+                    }
+                    else if (counter == 2) {
+
+                        boost::asio::streambuf message;
+
+                        std::vector<int> info = {1, counter, 1, 1};  // mode tick id run
+                        std::vector<double> frame = {100, 500, 600, -90, 0, 180};
+                        command.format(message, info, frame);
+                        boost::asio::write(*sock, message);
+
+                        cout << "Server wrote message #" << counter << endl;
+                        cout << streambufToPtr(message) << endl;
+                        cout << endl;
+
+                        ++counter;
+                    }
+                    else if (counter == 3) {
+
+                        boost::asio::streambuf message;
+
+                        std::vector<int> info = {1, counter, 1, 1};  // mode tick id run
+                        std::vector<double> frame = {-100, 500, 600, -90, 0, 180};
+                        command.format(message, info, frame);
+                        boost::asio::write(*sock, message);
+
+                        cout << "Server wrote message #" << counter << endl;
+                        cout << streambufToPtr(message) << endl;
+                        cout << endl;
+
+                        ++ counter;
+                    }
+                    else if (counter == 4) {
+
+                        boost::asio::streambuf message;
+
+                        std::vector<int> info = {1, counter, 1, 0};  // mode tick id run
+                        std::vector<double> frame = {0, 530, 730, -90, 45, 180};   // home and then quit KRL
+                        command.format(message, info, frame);
+                        boost::asio::write(*sock, message);
+
+                        cout << "Server wrote message #" << counter << endl;
+                        cout << streambufToPtr(message) << endl;
+                        cout << endl;
+
+                        ++ counter;
+                    }
+                    else {
+
+                    ++counter;  // do nothing
+
+                    }
                 }
             }
             catch (std::exception &e){
