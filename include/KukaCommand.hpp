@@ -16,8 +16,9 @@ class KukaCommand
             frame:  X Y Z A B C
         */
         void format( boost::asio::streambuf &message, const std::vector<int> &info , const std::vector<double> &frame) {
-
+            // TODO: rewrite this for new data structure - vector< framevector<double> >
             std::ostream to_message_stream(&message);
+
 
             to_message_stream   << "<ExternalData>\r\n";
 
@@ -34,6 +35,7 @@ class KukaCommand
                                 << "CRot=\"" << frame[5] << "\" />\r\n";
 
             to_message_stream   << "</ExternalData>\r\n";
+
             //to_message_stream   << "\r\n";
         }
 

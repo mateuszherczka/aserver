@@ -21,6 +21,7 @@ using std::cout;
 using std::endl;
 
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
+typedef boost::shared_ptr<boost::asio::streambuf> streambuf_ptr;
 
 
 class Server
@@ -28,21 +29,71 @@ class Server
     public:
         Server() {
 
-            serverConfig.load();
-            cout << "Port MaxBufferSize EndString:" << endl;
-            serverConfig.printValues();
+            loadConfig();
 
-            startListening(serverConfig.getPort());
+            //startListening(serverConfig.getPort());
         }
 
         virtual ~Server() {
             closeConnection();
         }
 
-        void session() {}
+        void sendPose(const std::vector<int> &info, std::vector<double> &frame) {
 
-        void sendPose(const std::vector<int> &info, const std::vector<double> &frame) {}    // TODO: implement sendCommand()
+
+            streambuf_ptr message(new boost::asio::streambuf);
+            command.format(*message, info, frame);   // first: infovector<int>, second: framevector<int>
+
+            shPtrQueue.push(message);
+
+            //cout << "Pushed message." << endl;
+
+        }    // TODO: implement sendPose()
+
         void sendTrajectory() {} // TODO: implement sendTrajectory()
+
+        void startListening() {
+            startListening(serverConfig.getPort());
+        }
+
+        void loadConfig() {
+
+            serverConfig.load();
+            cout << "Port MaxBufferSize EndString:" << endl;
+            serverConfig.printValues();
+
+        }
+
+
+        void closeConnection() {
+            // TODO: clean thread interrupt
+            connected = false;
+
+        }
+
+        bool isConnected() { return connected; }
+
+        bool sendQueueEmpty() { return shPtrQueue.empty(); }
+
+    protected:
+
+    private:
+
+        bool connected = false;
+        bool doParse = true;
+
+        // XML parsers
+        ServerConfig serverConfig;
+        KukaCommand command;
+        KukaResponse response;
+
+        // queue for incoming messages
+        //ThreadSafeQueue< std::pair <std::vector<int>,std::vector< std::vector<double> > >> messageQueue;
+
+        // or should we do a queue of streambufs?
+        //ThreadSafeQueue< boost::asio::streambuf > streambufQueue;
+
+        ThreadSafeQueue< streambuf_ptr > shPtrQueue;
 
         /*
         Specify port.
@@ -60,17 +111,17 @@ class Server
                 socket_ptr sock(new tcp::socket(io_service));
                 acceptor.accept(*sock);
 
-                connected = true;
-
                 cout << "A client connected." << endl;
 
                 // spawn
                 boost::thread read_thread(&Server::readMessage,this, sock);
                 boost::thread write_thread(&Server::writeMessage,this, sock);
 
+                connected = true;
+
                 // block until threads return
-                read_thread.join();
-                write_thread.join();
+                //read_thread.join();
+                //write_thread.join();
             }
             catch (std::exception &e){
                 cout << "Server connection exception: " << e.what() << endl;
@@ -78,26 +129,6 @@ class Server
                 return;
             }
         };
-
-        void closeConnection() {
-            // TODO: clean thread interrupt
-            connected = false;
-            //socket.close();
-        };
-    protected:
-
-    private:
-
-        bool connected = false;
-        bool doParse = true;
-
-        // XML parsers
-        ServerConfig serverConfig;
-        KukaCommand command;
-        KukaResponse response;
-
-        // queue for incoming messages
-        ThreadSafeQueue< std::pair <std::vector<int>,std::vector<double>> > messageQueue;
 
         void readMessage(socket_ptr sock) {
             // TODO: is lock read necessary (probably not)
@@ -134,7 +165,7 @@ class Server
                     }
                 }
             }
-            catch (std::exception &e){  // actually this is useless right now
+            catch (std::exception &e){  // TODO: this is useless right now, fix
                 cout << "Fatal reading exception: " << e.what() << endl;
                 closeConnection();
                 return;
@@ -143,26 +174,40 @@ class Server
 
         void writeMessage(socket_ptr sock) {
 
-            cout << "Server write thread started, waiting 5 seconds." << endl;
-            boost::this_thread::sleep( boost::posix_time::seconds(5) );
+            cout << "Server write thread started, waiting 1 seconds." << endl;
+            boost::this_thread::sleep( boost::posix_time::seconds(1) );
 
-            int counter = 1;    // just to change message a little
+            int writtenMessages = 0;    // just to keep track of how many messages written
 
             try {
                 while (sock->is_open() && connected) {
-                    // TODO: test write queue
 
-                    std::pair<std::vector<int>,std::vector<double>> inPair; // expecting pair of vectors
-                    messageQueue.wait_and_pop(inPair);
+                    //std::pair<std::vector<int>,std::vector< std::vector<double>> > inPair;
+                    //messageQueue.wait_and_pop(inPair);  // should wake up when something is in the queue
 
-                    boost::asio::streambuf message;
-                    command.format(message, inPair.first, inPair.second);   // first: infovector<int>, second: framevector<int>
-                    boost::asio::write(*sock, message);
+                    //boost::asio::streambuf message;
 
-                    ++counter;
+                    //command.format(message, inPair.first, inPair.second);   // first: infovector<int>, second: vector< framevectors<double> >
 
+                    //boost::asio::write(*sock, message);
 
+                    streambuf_ptr message = *shPtrQueue.wait_and_pop();
 
+//                    cout << "--------------------------" << endl;
+//                    cout << "Writing message:" << endl << endl;
+//                    cout << streambufToPtr(*message);
+//                    cout << endl;
+
+                    boost::asio::write(*sock, *message);
+
+                    message.reset();    // TODO: is this how to cleanup? is the streambuf deleted now?
+
+                    ++writtenMessages;
+
+//                    cout << "Wrote message " << writtenMessages << ". Waiting 1 sec." << endl;
+//                    cout << "--------------------------" << endl;
+
+                    //boost::this_thread::sleep( boost::posix_time::seconds(1) );
                 }
             }
             catch (std::exception &e){
@@ -179,6 +224,8 @@ class Server
             const char* bufPtr=boost::asio::buffer_cast<const char*>(message.data());
             return bufPtr;
         }
+
+
 };
 
 #endif // SERVER_H
