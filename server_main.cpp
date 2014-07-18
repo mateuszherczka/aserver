@@ -6,6 +6,9 @@
 using std::cout;
 using std::endl;
 
+typedef std::vector<int> info_vec;
+typedef std::vector<double> frame_vec;
+
 int main()
 {
     HandlingServer aserver;     // loads config file on creation
@@ -14,8 +17,7 @@ int main()
 
     while( aserver.isConnected() ) {
 
-        // this thread isn't doing anything
-        boost::this_thread::sleep( boost::posix_time::milliseconds(100));
+        boost::this_thread::sleep( boost::posix_time::milliseconds(100));   // idle
     }
 
     cout << "Done, exiting." << endl;
