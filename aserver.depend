@@ -3,7 +3,7 @@
 	<iostream>
 	<Server.hpp>
 
-1405591435 /home/mh/dev/aserver/include/Server.hpp
+1405674519 /home/mh/dev/aserver/include/Server.hpp
 	<iostream>
 	<istream>
 	<ostream>
@@ -54,7 +54,7 @@
 	<boost/asio.hpp>
 	<tinyxml2.h>
 
-1405345207 /home/mh/dev/aserver/include/KukaResponse.hpp
+1405670288 /home/mh/dev/aserver/include/KukaResponse.hpp
 	<vector>
 	<XMLParser.hpp>
 
@@ -66,7 +66,10 @@
 	<queue>
 	<memory>
 
-1405590536 source:/home/mh/dev/aserver/server_main.cpp
+1405670867 source:/home/mh/dev/aserver/server_main.cpp
 	<iostream>
+	<HandlingServer.hpp>
+
+1405670792 /home/mh/dev/aserver/include/HandlingServer.hpp
 	<Server.hpp>
 

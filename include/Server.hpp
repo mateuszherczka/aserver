@@ -20,31 +20,53 @@ using boost::thread;
 using std::cout;
 using std::endl;
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
 typedef boost::shared_ptr<boost::asio::streambuf> streambuf_ptr;
 
+typedef std::vector<int> info_vec;
+typedef std::vector<double> frame_vec;
+
+// ---------------------------------------------------------------------------
+// Class
+// ---------------------------------------------------------------------------
 
 class Server
 {
     public:
+
+        // ---------------------------------------------------------------------------
+        // Constructor / Destructor
+        // ---------------------------------------------------------------------------
+
         Server() {
 
             loadConfig();
-
-            //startListening(serverConfig.getPort());
         }
 
         virtual ~Server() {
             closeConnection();
         }
 
-        void sendPose(const std::vector<int> &info, std::vector<double> &frame) {
+        // ---------------------------------------------------------------------------
+        // Pure Virtual
+        // ---------------------------------------------------------------------------
 
+        virtual void handleResponse() = 0; // This is mandatory to implement in derived class
+
+        // ---------------------------------------------------------------------------
+        // Methods
+        // ---------------------------------------------------------------------------
+
+        void sendPose(const info_vec &info, const frame_vec &frame) {
 
             streambuf_ptr message(new boost::asio::streambuf);
             command.format(*message, info, frame);   // first: infovector<int>, second: framevector<int>
 
-            shPtrQueue.push(message);
+            messageQueue.push(message);
 
             //cout << "Pushed message." << endl;
 
@@ -61,48 +83,80 @@ class Server
             serverConfig.load();
             cout << "Port MaxBufferSize EndString:" << endl;
             serverConfig.printValues();
-
         }
-
 
         void closeConnection() {
             // TODO: clean thread interrupt
             connected = false;
-
         }
 
         bool isConnected() { return connected; }
 
-        bool sendQueueEmpty() { return shPtrQueue.empty(); }
+        bool sendQueueEmpty() { return messageQueue.empty(); }
 
     protected:
 
+        KukaResponse response;  // accesible to derived class which implements handleResponse
+
     private:
 
-        bool connected = false;
-        bool doParse = true;
+        // ---------------------------------------------------------------------------
+        // Data
+        // ---------------------------------------------------------------------------
+
+        bool connected = false;         // breaks read,write and onresponse loops when set to false
+
+        int invalidParseCount = 0;      // handy counters
+        int readMessageCount = 0;
+        int writtenMessageCount = 0;
 
         // XML parsers
         ServerConfig serverConfig;
         KukaCommand command;
-        KukaResponse response;
 
-        // queue for incoming messages
-        //ThreadSafeQueue< std::pair <std::vector<int>,std::vector< std::vector<double> > >> messageQueue;
-
-        // or should we do a queue of streambufs?
-        //ThreadSafeQueue< boost::asio::streambuf > streambufQueue;
-
-        ThreadSafeQueue< streambuf_ptr > shPtrQueue;
+        ThreadSafeQueue<streambuf_ptr> messageQueue;
+        ThreadSafeQueue<streambuf_ptr> responseQueue;
 
         /*
-        Specify port.
-        Blocks until connection ends.
+        Blocks while connected.
+        */
+        void onResponse(socket_ptr sock) {
+            while (sock->is_open() && connected) {
+                try {
+                    streambuf_ptr message;
+                    responseQueue.wait_and_pop(message);    // blocks
+
+                    // we have a message, parse xml and do something
+                    response.parse(*message);
+                    if (response.isValid()) {   // call user defined handle response only if parser has some success
+                        handleResponse();
+                    }
+                    else {
+                        ++invalidParseCount;
+                    }
+
+                    message.reset();
+                }
+                catch (std::exception &e){
+                    cout << "OnResponse exception: " << e.what() << endl;
+                    //closeConnection();
+                    //return;
+                }
+            }
+
+
+        }
+
+        // ---------------------------------------------------------------------------
+        // Methods
+        // ---------------------------------------------------------------------------
+        /*
+        Specify port. Blocks until incoming connection.
+        When connected, spawns read/write threads, then exits.
         */
         void startListening(unsigned short port) {
-
+            // TODO: make this so it listens continually, allowing connection if not already connected
             try {
-                // we need one of these
                 boost::asio::io_service io_service;
                 tcp::acceptor acceptor(io_service, tcp::endpoint(tcp::v4(), port));
 
@@ -113,15 +167,16 @@ class Server
 
                 cout << "A client connected." << endl;
 
+                invalidParseCount = 0;
+                readMessageCount = 0;
+                writtenMessageCount = 0;
+
                 // spawn
                 boost::thread read_thread(&Server::readMessage,this, sock);
                 boost::thread write_thread(&Server::writeMessage,this, sock);
+                boost::thread response_thread(&Server::onResponse,this, sock);
 
                 connected = true;
-
-                // block until threads return
-                //read_thread.join();
-                //write_thread.join();
             }
             catch (std::exception &e){
                 cout << "Server connection exception: " << e.what() << endl;
@@ -130,38 +185,39 @@ class Server
             }
         };
 
+        /*
+        Specify socket pointer.
+        Blocks until connection ends.
+        */
         void readMessage(socket_ptr sock) {
             // TODO: is lock read necessary (probably not)
             cout << "Server read thread started." << endl;
             try {
-                int counter = 0;
+
                 while (sock->is_open() && connected) {
 
-                    boost::asio::streambuf message(serverConfig.getMaxBufferSize()); // TODO: streambuf should not be created here but reused, how?
+                    //boost::asio::streambuf message(serverConfig.getMaxBufferSize());
                     try {
+
+                        streambuf_ptr message(new boost::asio::streambuf);
+
                         boost::system::error_code error;
-                        boost::asio::read_until(*sock, message, serverConfig.getEndString(), error);
+                        boost::asio::read_until(*sock, *message, serverConfig.getEndString(), error);
 
                         if (error == boost::asio::error::eof) {
                             cout << "Client disconnected." << endl;
-                            connected = false;
+                            closeConnection();
                             return;
                         }
 
-                        if (doParse) {
-                            response.parse(message);
-                            response.printValues();
-                        }
+                        responseQueue.push(message);
 
-                        cout << "Server read message #" << counter << endl;
-                        cout << streambufToPtr(message) << endl;
-
-                        ++counter;
+                        ++readMessageCount;
                     }
                     catch (std::exception &e){  // complain but don't quit
-                        cout << "Reading (no matching xml end element?): " << e.what() << endl;
-                        cout << "Buffer contents:" << endl;
-                        cout << streambufToPtr(message);
+                        cout << "ReadMessage exception (no matching xml end element?): " << e.what() << endl;
+                        //cout << "Buffer contents:" << endl;
+                        //cout << streambufToPtr(*message);
                     }
                 }
             }
@@ -172,42 +228,28 @@ class Server
             }
         };  // separate thread
 
+        /*
+        Specify socket pointer.
+        Blocks until connection ends.
+        */
         void writeMessage(socket_ptr sock) {
 
             cout << "Server write thread started, waiting 1 seconds." << endl;
             boost::this_thread::sleep( boost::posix_time::seconds(1) );
 
-            int writtenMessages = 0;    // just to keep track of how many messages written
-
             try {
                 while (sock->is_open() && connected) {
 
-                    //std::pair<std::vector<int>,std::vector< std::vector<double>> > inPair;
-                    //messageQueue.wait_and_pop(inPair);  // should wake up when something is in the queue
+                    streambuf_ptr message;
+                    messageQueue.wait_and_pop(message); // lets try this instead of:
 
-                    //boost::asio::streambuf message;
-
-                    //command.format(message, inPair.first, inPair.second);   // first: infovector<int>, second: vector< framevectors<double> >
-
-                    //boost::asio::write(*sock, message);
-
-                    streambuf_ptr message = *shPtrQueue.wait_and_pop();
-
-//                    cout << "--------------------------" << endl;
-//                    cout << "Writing message:" << endl << endl;
-//                    cout << streambufToPtr(*message);
-//                    cout << endl;
+                    //streambuf_ptr message = *messageQueue.wait_and_pop();
 
                     boost::asio::write(*sock, *message);
 
                     message.reset();    // TODO: is this how to cleanup? is the streambuf deleted now?
 
-                    ++writtenMessages;
-
-//                    cout << "Wrote message " << writtenMessages << ". Waiting 1 sec." << endl;
-//                    cout << "--------------------------" << endl;
-
-                    //boost::this_thread::sleep( boost::posix_time::seconds(1) );
+                    ++writtenMessageCount;
                 }
             }
             catch (std::exception &e){
@@ -218,7 +260,7 @@ class Server
         };     // separate thread
 
         /*
-        Gets a pointer to buffer inside streambuf.
+        Returns a pointer to buffer inside streambuf.
         */
         const char * streambufToPtr(boost::asio::streambuf &message) {
             const char* bufPtr=boost::asio::buffer_cast<const char*>(message.data());
@@ -230,93 +272,3 @@ class Server
 
 #endif // SERVER_H
 
-                    /*
-                    // for testing we write something every nn seconds
-                    //boost::this_thread::sleep( boost::posix_time::seconds(1) );
-
-                    // we write a series of messages, then do nothing more
-                    if (counter == 1) {    // only send once to test
-
-                        boost::asio::streambuf message;
-
-                        std::vector<int> info = {1, counter, 1, 1};  // mode tick id run
-                        std::vector<double> frame = {0, 700, 700, -90, 0, 180};
-                        command.format(message, info, frame);
-                        boost::asio::write(*sock, message);
-
-                        cout << "Server wrote message #" << counter << endl;
-                        cout << streambufToPtr(message) << endl;
-                        cout << endl;
-
-                        ++counter;
-                    }
-                    else if (counter == 2) {
-
-                        boost::asio::streambuf message;
-
-                        std::vector<int> info = {1, counter, 1, 1};  // mode tick id run
-                        std::vector<double> frame = {100, 600, 600, -90, 0, 180};
-                        command.format(message, info, frame);
-                        boost::asio::write(*sock, message);
-
-                        cout << "Server wrote message #" << counter << endl;
-                        cout << streambufToPtr(message) << endl;
-                        cout << endl;
-
-                        ++counter;
-                    }
-                    else if (counter == 3) {
-
-                        boost::asio::streambuf message;
-
-                        std::vector<int> info = {1, counter, 1, 1};  // mode tick id run
-                        std::vector<double> frame = {-100, 500, 500, -90, 0, 180};
-                        command.format(message, info, frame);
-                        boost::asio::write(*sock, message);
-
-                        cout << "Server wrote message #" << counter << endl;
-                        cout << streambufToPtr(message) << endl;
-                        cout << endl;
-
-                        ++ counter;
-                    }
-                    else if (counter == 4) {
-
-                        boost::asio::streambuf message;
-
-                        std::vector<int> info = {1, counter, 1, 0};  // mode tick id run
-                        std::vector<double> frame = {0, 530, 730, -90, 45, 180};   // home and then quit KRL
-                        command.format(message, info, frame);
-                        boost::asio::write(*sock, message);
-
-                        cout << "Server wrote message #" << counter << endl;
-                        cout << streambufToPtr(message) << endl;
-                        cout << endl;
-
-                        ++ counter;
-                    }
-                    else {
-
-                    ++counter;  // do nothing
-
-                    }
-                    */
-
-
-//#include <KukaBuildXMLFrame.hpp>
-//#include <KukaParseXMLFrame.hpp>
-//#include <KukaBuildXMLExample.hpp>
-//#include <KukaParseXMLExample.hpp>
-
-        //KukaBuildXMLFrame kukaBuildMessage;
-        //KukaParseXMLFrame kukaParseMessage;
-        //KukaBuildXMLExample kukaBuildMessage;
-        //KukaParseXMLExample kukaParseMessage;
-
-//kukaBuildMessage.build(message,1+counter,2+counter,3+counter,4+counter,5+counter,6+counter);
-                    //command.setPosXYZ(counter,counter,counter);
-
-//std::string defaultHost = "localhost"; //std::string defaultHost = "127.0.0.1";
-//std::string defaultPort = "6008";
-//std::string endString = "</Robot>";
-//std::size_t maxBufferSize = 1024;

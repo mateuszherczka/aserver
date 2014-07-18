@@ -12,10 +12,19 @@ class KukaResponse : public XMLParser
 {
     public:
 
-        KukaResponse() : robotInfo(5,0), robotFrame(6,0) {}
+        // ---------------------------------------------------------------------------
+        // Constructor / Destructor
+        // ---------------------------------------------------------------------------
+
+        KukaResponse() : info(5,0), frame(6,0) {}
 
         virtual ~KukaResponse() {}
 
+        // ---------------------------------------------------------------------------
+        // Public Methods
+        // ---------------------------------------------------------------------------
+
+        // parses and stores internally
         void parse(boost::asio::streambuf &message) {
 
             // try to parse
@@ -39,7 +48,7 @@ class KukaResponse : public XMLParser
 
             if( xmltext ) {
                 try {
-                    robotInfo[0] = boost::lexical_cast<int>(xmltext->Value());
+                    info[0] = boost::lexical_cast<int>(xmltext->Value());
                 }
                 catch (const boost::bad_lexical_cast &e) {
                     badCast("Status");
@@ -55,7 +64,7 @@ class KukaResponse : public XMLParser
 
             if( xmltext ) {
                 try {
-                    robotInfo[1] = boost::lexical_cast<int>(xmltext->Value());
+                    info[1] = boost::lexical_cast<int>(xmltext->Value());
                 }
                 catch (const boost::bad_lexical_cast &e) {
                     badCast("Error");
@@ -71,7 +80,7 @@ class KukaResponse : public XMLParser
 
             if( xmltext ) {
                 try {
-                    robotInfo[2] = boost::lexical_cast<int>(xmltext->Value());
+                    info[2] = boost::lexical_cast<int>(xmltext->Value());
                 }
                 catch (const boost::bad_lexical_cast &e) {
                     badCast("Mode");
@@ -87,7 +96,7 @@ class KukaResponse : public XMLParser
 
             if( xmltext ) {
                 try {
-                    robotInfo[3] = boost::lexical_cast<int>(xmltext->Value());
+                    info[3] = boost::lexical_cast<int>(xmltext->Value());
                 }
                 catch (const boost::bad_lexical_cast &e) {
                     badCast("Tick");
@@ -103,7 +112,7 @@ class KukaResponse : public XMLParser
 
             if( xmltext ) {
                 try {
-                    robotInfo[4] = boost::lexical_cast<int>(xmltext->Value());
+                    info[4] = boost::lexical_cast<int>(xmltext->Value());
                 }
                 catch (const boost::bad_lexical_cast &e) {
                     badCast("Id");
@@ -112,25 +121,25 @@ class KukaResponse : public XMLParser
             else { nodeNotFound("Id"); }
 
             // ActPos
-            XMLElement *frame = docHandle.FirstChildElement( "Robot" ).
+            XMLElement *xframe = docHandle.FirstChildElement( "Robot" ).
                         FirstChildElement( "ActPos" ).
                         ToElement();
 
-            if ( frame ) {    // check for nulpointer
+            if ( xframe ) {    // check for nulpointer
 
                 int xmlerr = 0;
 
-                xmlerr += frame->QueryDoubleAttribute( "X",&robotFrame[0] );    // errorcode 0 if ok
+                xmlerr += xframe->QueryDoubleAttribute( "X",&frame[0] );    // errorcode 0 if ok
 
-                xmlerr += frame->QueryDoubleAttribute( "Y",&robotFrame[1] );
+                xmlerr += xframe->QueryDoubleAttribute( "Y",&frame[1] );
 
-                xmlerr += frame->QueryDoubleAttribute( "Z",&robotFrame[2] );
+                xmlerr += xframe->QueryDoubleAttribute( "Z",&frame[2] );
 
-                xmlerr += frame->QueryDoubleAttribute( "A",&robotFrame[3] );    // errorcode 0 if ok
+                xmlerr += xframe->QueryDoubleAttribute( "A",&frame[3] );    // errorcode 0 if ok
 
-                xmlerr += frame->QueryDoubleAttribute( "B",&robotFrame[4] );
+                xmlerr += xframe->QueryDoubleAttribute( "B",&frame[4] );
 
-                xmlerr += frame->QueryDoubleAttribute( "C",&robotFrame[5] );
+                xmlerr += xframe->QueryDoubleAttribute( "C",&frame[5] );
 
                 if (xmlerr != 0) {
                     malformedXMLError("ActPos Attributes");
@@ -143,26 +152,26 @@ class KukaResponse : public XMLParser
             Status Error Mode Tick Id
         */
         std::vector<int> getInfo() {
-            return robotInfo;
+            return info;
         }
 
         /*
             X Y Z A B C
         */
         std::vector<double> getFrame() {
-            return robotFrame;
+            return frame;
         }
 
         void printValues() {
 
             cout << "Info: ";
-            for (const auto &val : robotInfo) {
+            for (const auto &val : info) {
                 cout << val << " ";
             }
             cout << endl;
 
             cout << "Frame: ";
-            for (const auto &val : robotFrame) {
+            for (const auto &val : frame) {
                 cout << val << " ";
             }
             cout << endl;
@@ -172,8 +181,12 @@ class KukaResponse : public XMLParser
 
     private:
 
-        std::vector<int> robotInfo;
-        std::vector<double> robotFrame;
+        // ---------------------------------------------------------------------------
+        // Private Data
+        // ---------------------------------------------------------------------------
+
+        std::vector<int> info;
+        std::vector<double> frame;
 
 };
 
