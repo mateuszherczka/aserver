@@ -10,10 +10,18 @@ using boost::bad_lexical_cast;
 class ServerConfig : public XMLParser
 {
     public:
+
+        // ---------------------------------------------------------------------------
+        // Constructor / Destructor
+        // ---------------------------------------------------------------------------
         ServerConfig() {
             //load();
         }
         virtual ~ServerConfig() {}
+
+        // ---------------------------------------------------------------------------
+        // Public methods
+        // ---------------------------------------------------------------------------
 
         void load() {
             try {
@@ -44,12 +52,20 @@ class ServerConfig : public XMLParser
 
     private:
 
+        // ---------------------------------------------------------------------------
+        // Private data
+        // ---------------------------------------------------------------------------
+
         std::string filename = "ServerConfig.xml";  // load this
 
         // default
         unsigned short port = 6008;
         std::string endString = "</Robot>";
         std::size_t maxBufferSize = 2048;
+
+        // ---------------------------------------------------------------------------
+        // Private methods
+        // ---------------------------------------------------------------------------
 
         void parse() {
             XMLHandle docHandle( &doc );

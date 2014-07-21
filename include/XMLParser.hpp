@@ -6,8 +6,7 @@
 #include <tinyxml2.h>
 
 using namespace tinyxml2;
-using std::cout;
-using std::endl;
+
 
 /*
 Base.

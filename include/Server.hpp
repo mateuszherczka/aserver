@@ -8,17 +8,19 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 
-#include<ThreadSafeQueue.hpp>
+#include <ThreadSafeQueue.hpp>
+
+#include <types.hpp>
 
 #include <ServerConfig.hpp>
 #include <KukaResponse.hpp>
 #include <KukaCommand.hpp>
 
 using boost::asio::ip::tcp;
-using std::exception;
 using boost::thread;
-using std::cout;
-using std::endl;
+//using std::exception;
+//using std::cout;
+//using std::endl;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -27,8 +29,9 @@ using std::endl;
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
 typedef boost::shared_ptr<boost::asio::streambuf> streambuf_ptr;
 
-typedef std::vector<int> info_vec;
-typedef std::vector<double> frame_vec;
+//typedef std::vector<int> info_vec;
+//typedef std::vector<double> frame_vec;
+//typedef std::vector<frame_vec> trajectory_vec;
 
 // ---------------------------------------------------------------------------
 // Class

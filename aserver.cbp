@@ -40,6 +40,7 @@
 			<Add library="boost_system" />
 			<Add library="boost_thread" />
 		</Linker>
+		<Unit filename="include/HandlingServer.hpp" />
 		<Unit filename="include/KukaCommand.hpp" />
 		<Unit filename="include/KukaResponse.hpp" />
 		<Unit filename="include/Server.hpp" />
@@ -47,7 +48,10 @@
 		<Unit filename="include/ThreadSafeQueue.hpp" />
 		<Unit filename="include/XMLFormatter.hpp" />
 		<Unit filename="include/XMLParser.hpp" />
-		<Unit filename="main.cpp" />
+		<Unit filename="server_main.cpp" />
+		<Unit filename="snippets/server.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<debugger />
