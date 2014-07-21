@@ -11,7 +11,7 @@ Some often used types and std's.
 
 typedef std::vector<int> info_vec;
 typedef std::vector<double> frame_vec;
-typedef std::vector<frame_vec> trajectory_vec;
+typedef std::vector< frame_vec > trajectory_vec;
 
 using std::cout;
 using std::cerr;

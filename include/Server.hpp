@@ -67,15 +67,18 @@ class Server
         void sendPose(const info_vec &info, const frame_vec &frame) {
 
             streambuf_ptr message(new boost::asio::streambuf);
-            command.format(*message, info, frame);   // first: infovector<int>, second: framevector<int>
+            command.formatPose(*message, info, frame);   // first: infovector<int>, second: framevector<int>
 
             messageQueue.push(message);
+        }
 
-            //cout << "Pushed message." << endl;
+        void sendTrajectory(const info_vec &info, const trajectory_vec &trajectory) {
 
-        }    // TODO: implement sendPose()
+            streambuf_ptr message(new boost::asio::streambuf);
+            command.formatTrajectory(*message, info, trajectory);   // first: infovector<int>, second: framevector<int>
 
-        void sendTrajectory() {} // TODO: implement sendTrajectory()
+            messageQueue.push(message);
+        } // TODO: implement sendTrajectory()
 
         void startListening() {
             startListening(serverConfig.getPort());
@@ -180,6 +183,9 @@ class Server
                 boost::thread response_thread(&Server::onResponse,this, sock);
 
                 connected = true;
+
+                cout << "Waiting 1 seconds." << endl;
+                boost::this_thread::sleep( boost::posix_time::seconds(1) );
             }
             catch (std::exception &e){
                 cout << "Server connection exception: " << e.what() << endl;
@@ -237,8 +243,7 @@ class Server
         */
         void writeMessage(socket_ptr sock) {
 
-            cout << "Server write thread started, waiting 1 seconds." << endl;
-            boost::this_thread::sleep( boost::posix_time::seconds(1) );
+            cout << "Server write thread started." << endl;
 
             try {
                 while (sock->is_open() && connected) {

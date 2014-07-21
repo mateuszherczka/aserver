@@ -58,7 +58,7 @@ class KukaCommand
         void formatTrajectory(boost::asio::streambuf &message, const info_vec &info , const trajectory_vec &trajectory) {
 
             // TODO: if this is a fact, something is crap further up the line
-            if (info[5] != trajectory.size()) {cerr << "Warning! Size of trajectory vector doesn't match framecount in info vector!" << endl; }
+            //if (info[5] != trajectory.size()) {cerr << "Warning! Size of trajectory vector doesn't match framecount in info vector!" << endl; }
 
             std::ostream to_message_stream(&message);
 

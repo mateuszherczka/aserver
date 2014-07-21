@@ -30,19 +30,19 @@ class DataFile
         DataFile() {}
         virtual ~DataFile() {}
 
-        void loadSpaceDelimited(const string& filename, trajectory_vec& trajectory) {
+        void loadSpaceDelimited(const string& filename, trajectory_vec &trajectory) {
 
             string line;
             ifstream file(filename);
 
             boost::char_separator<char> spaceSeparator(" ");
 
+            if (file.is_open()) {
 
-            if (file.is_open())
-            {
+                while ( getline(file,line) ) {
 
-                while ( getline(file,line) )
-                {
+                    // TODO: filter out empty lines and incorrect lines
+
                     boost::tokenizer<boost::char_separator<char>> tokens(line, spaceSeparator);
 
                     frame_vec frame;
@@ -55,11 +55,13 @@ class DataFile
                         }
                     }
                     catch (std::exception& e) {
-                        cerr << "Cast to double in datafile exception: " << e.what();
+                        cerr << "Cast to double in datafile failed, file not read: " << e.what();
+                        return;
                     }
 
-                    trajectory.push_back(frame);    // TODO: is this efficient copywise?
-
+                    if (frame.size() == correctTokenCount) {
+                        trajectory.push_back(frame);    // TODO: is this efficient copywise?
+                    }
                 }
                 file.close();
             }
@@ -80,6 +82,7 @@ class DataFile
     protected:
     private:
 
+        int correctTokenCount = 6;
         int precision = 8;
         double roundingConstant = pow(10, precision);
 
