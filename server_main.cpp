@@ -27,12 +27,15 @@ int main()
     dataFile.loadSpaceDelimited(filename, trajectory);  // store file contents in trajectory vector
 
     // set parameters for trajectory
-    info_vec info(6,1);  // info vector, init all values to 1
+    info_vec info(7,1);  // info vector, init all values to 1
 
-    int vel = 20;   // [mm/sec], <Vel></Vel>, info[4]
+    int vel = 200;   // [mm/sec], <Vel></Vel>, info[4]
+    int tol = 20;   // [mm], <Tol></Tol>, info[5]
     int frames = boost::lexical_cast<int>(trajectory.size());   // <Frames></Frames>, info[5]
-    info[4] = vel;
-    info[5] = frames;
+
+    info[4] = vel;  // TODO: make a map for this
+    info[5] = tol;
+    info[6] = frames;
 
     cout << "Have " << trajectory.size() << " frames to send, starting server." << endl;
 
@@ -42,12 +45,13 @@ int main()
     aserver.startListening();   // blocks until connection
 
 
-    cout << "Now sending " << frames << " frames." << endl;
-    boost::this_thread::sleep( boost::posix_time::milliseconds(100));   // idle
+    cout << "Waiting 5s and sending " << frames << " frames." << endl;  // TODO: make it wait for the robots initial message
+    boost::this_thread::sleep( boost::posix_time::milliseconds(5000));
 
     // send trajectory
     aserver.sendTrajectory(info, trajectory);
 
+    cout << "Idle." << endl;
     // idle
     while( aserver.isConnected() ) {
 

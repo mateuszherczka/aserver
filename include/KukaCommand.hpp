@@ -36,7 +36,8 @@ class KukaCommand
             to_message_stream   << "<Id>" << info[2] << "</Id>\r\n";
             to_message_stream   << "<Run>" << info[3] << "</Run>\r\n";
             to_message_stream   << "<Vel>" << info[4] << "</Vel>\r\n";
-            to_message_stream   << "<Frames>" << info[5] << "</Frames>\r\n";
+            to_message_stream   << "<Tol>" << info[5] << "</Tol>\r\n";
+            to_message_stream   << "<Frames>" << info[6] << "</Frames>\r\n";
 
             to_message_stream   << "<XFrame XPos=\"" << frame[0] << "\" "   // the attributes MUST be XPos YPos ZPos ARot BRot CRot
                                 << "YPos=\"" << frame[1] << "\" "
@@ -71,7 +72,8 @@ class KukaCommand
             to_message_stream   << "<Id>" << info[2] << "</Id>\r\n";
             to_message_stream   << "<Run>" << info[3] << "</Run>\r\n";
             to_message_stream   << "<Vel>" << info[4] << "</Vel>\r\n";
-            to_message_stream   << "<Frames>" << info[5] << "</Frames>\r\n";
+            to_message_stream   << "<Tol>" << info[5] << "</Tol>\r\n";
+            to_message_stream   << "<Frames>" << info[6] << "</Frames>\r\n";
 
             // trajectory
             for (const frame_vec &frame : trajectory) {

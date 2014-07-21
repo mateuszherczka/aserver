@@ -12,22 +12,14 @@ class HandlingServer : public Server
 
         void handleResponse() override {
 
-            if (handledCount % 100 == 0) {
-                cout << "Handling response #" << handledCount << endl;
-            }
+            cout << "------------------------------------------------" << endl;
+            cout << "Response #" << handledCount << endl;
 
+            response.printValues();
 
-            int i = handledCount;
-            double j = i*0.001;
-
-            info_vec info = {i,i,i,i};
-            frame_vec frame = {j,j,j,j,j,j};
-
-            sendPose(info,frame);
+            cout << "------------------------------------------------" << endl;
 
             ++handledCount;
-
-            //response.printValues();
         }
 
     protected:
@@ -37,3 +29,19 @@ class HandlingServer : public Server
 };
 
 #endif // HANDLINGSERVER_H
+
+/*
+
+ if (handledCount % 100 == 0) {
+                cout << "Handling response #" << handledCount << endl;
+            }
+
+int i = handledCount;
+double j = i*0.001;
+
+info_vec info = {i,i,i,i};
+frame_vec frame = {j,j,j,j,j,j};
+
+sendPose(info,frame);
+
+*/
